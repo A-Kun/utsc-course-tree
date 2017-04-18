@@ -1,0 +1,8 @@
+.callout {
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.disabled {
+  cursor: no-drop !important;
+}

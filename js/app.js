@@ -1,50 +1,17 @@
-$(document).foundation()
+$(document).foundation();
 
-var elements = $('.callout');
-var courses = {
-  'MGEA01H3': {
-    'pre': [],
-    'ex': ['MGEA02H3'],
-  },
-  'MGEA02H3': {
-    'pre': [],
-    'ex': ['MGEA01H3'],
-  },
-  'MGEA05H3': {
-    'pre': [],
-    'ex': ['MGEA06H3'],
-  },
-  'MGEA06H3': {
-    'pre': [],
-    'ex': ['MGEA05H3'],
-  },
-  'MGEB01H3': {
-    'pre': [['MGEA01H3', 'MGEA02H3'], ['MGEA05H3', 'MGEA06H3']],
-    'ex': ['MGEB02H3'],
-  },
-  'MGEB02H3': {
-    'pre': [['MGEA02H3'], ['MGEA06H3']],
-    'ex': ['MGEB01H3'],
-  },
-  'MGEB05H3': {
-    'pre': [['MGEA01H3', 'MGEA02H3'], ['MGEA05H3', 'MGEA06H3']],
-    'ex': ['MGEB06H3'],
-  },
-  'MGEB06H3': {
-    'pre': [['MGEA02H3'], ['MGEA06H3']],
-    'ex': ['MGEB05H3'],
-  },
-}
+var elements;
+var courses;
 var selected = [];
 
 function meetPre(course) {
-  var pre = courses[course]['pre'];
+  var pre = courses[course].pre;
   for (var i = 0; i < pre.length; i++) {
     var nextBucket = pre[i];
     var found = false;
+
     for (var j = 0; j < nextBucket.length; j++) {
       var nextCourse = nextBucket[j];
-      //console.log(nextCourse);
       if (selected.indexOf(nextCourse) > -1) {
         found = true;
         break;
@@ -59,7 +26,7 @@ function meetPre(course) {
 }
 
 function meetEx(course) {
-  var ex = courses[course]['ex'];
+  var ex = courses[course].ex;
   var result = true;
   for (var i = 0; i < ex.length; i++) {
     var nextCourse = ex[i];
@@ -77,8 +44,8 @@ function canTakeCourse(course) {
 function isPreOfSelectedCourse(course) {
   for (var i = 0; i < selected.length; i++) {
     var nextSelected = selected[i];
-    for (var j = 0; j < courses[nextSelected]['pre'].length; j++) {
-      var nextBucket = courses[nextSelected]['pre'][j];
+    for (var j = 0; j < courses[nextSelected].pre.length; j++) {
+      var nextBucket = courses[nextSelected].pre[j];
       for (var k = 0; k < nextBucket.length; k++) {
         var nextCourse = nextBucket[k];
         if (nextCourse === course) {
@@ -110,13 +77,13 @@ function refreshCourseStatus() {
     nextElement = elements[i];
     nextElement.className = getClassName(nextElement.id);
   }
-};
+}
 
 function toggleCourse() {
   var course = this.id;
   var className = this.className;
   if (className.indexOf('disabled') > -1) {
-    return
+    return;
   }
   if (className.indexOf('primary') > -1) {
     selected.push(course);
@@ -129,7 +96,39 @@ function toggleCourse() {
   refreshCourseStatus();
 }
 
-(function initialize() {
+function populateHTML() {
+  var html = '';
+  var count = 0;
+  Object.keys(courses).forEach(function(nextCourse) {
+    var title = courses[nextCourse].title;
+    var preList = [];
+    courses[nextCourse].pre.forEach(function(nextOrGroup) {
+      preList.push('[' + nextOrGroup.join(' or ') + ']');
+    });
+    var pre = preList.join(' and ');
+    var ex = courses[nextCourse].ex.join(', ');
+
+    if (count === 0) {
+      html += '<div class="row">';
+    } else if (count % 4 === 0) {
+      html += '</div><div class="row">';
+    }
+    html += '<div class="large-3 columns"><div id="' + nextCourse;
+    html += '" class="callout"><h5>' + nextCourse;
+    html += '</h5><p>' + title;
+    html += '</p><p><b>Prerequisite:&nbsp;</b>' + (pre ? pre : 'None');
+    html += '</p><p><b>Exclusion:&nbsp;</b>' + (ex ? ex : 'None');
+    html += '</p></div></div>';
+    count++;
+  });
+  html += '</div>';
+  document.getElementById('courses-canvas').innerHTML = html;
+}
+
+$.getJSON('./courses.json', function(data) {
+  courses = data;
+  populateHTML();
+  elements = $('.callout');
   elements.click(toggleCourse);
   refreshCourseStatus();
-})();
+});

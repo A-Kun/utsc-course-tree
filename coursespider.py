@@ -6,14 +6,6 @@ import os
 from bs4 import BeautifulSoup
 from multiprocessing.pool import ThreadPool
 
-# class Course(object):
-#     def __init__(self, code, description = None, prerequisite = None, corequisite = None, exclusion = None):
-#         self.code = code
-#         self.description = description
-#         self.prerequisite = prerequisite
-#         self.corequisite = corequisite
-#         self.exclusion = exclusion
-
 def get_course_under_letter(letter):
     courses_dict = {}
     url_template = 'https://utsc.calendar.utoronto.ca/'
@@ -42,7 +34,7 @@ def get_course_under_letter(letter):
         if exclusion_soup:
             exclusions_string = exclusion_soup.find('p').get_text()
             exclusions = re.findall('\w{4}\d{2}\w\d|\w{3}\d{3}\w+', exclusions_string)
-            course_dict['exclusions'] = exclusions
+            course_dict['exclusions'] = {'str': exclusions_string, 'list': exclusions}
         breadth_req_soup = course_info.find('div', 'field field-name-field-breadth-req field-type-list-text field-label-inline clearfix')
         # get br
         if breadth_req_soup:
@@ -56,7 +48,9 @@ def get_course_under_letter(letter):
             course_dict['prerequisite'] = {'str': prerequisite_string, 'list': prerequisite}
         print(course_dict)
         courses_dict[course_dict['code']] = course_dict
-        with open(letter + '.json', 'w') as file:
+        if not os.path.exists('Courses'):
+            os.makedirs('Courses')
+        with open('Courses/' + letter + '.json', 'w') as file:
             json_str = json.dumps(courses_dict)
             file.write(json_str)
 
